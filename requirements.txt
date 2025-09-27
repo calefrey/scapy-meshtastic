@@ -2,3 +2,4 @@ scapy==2.6.1
 protobuf==6.31.1
 meshtastic==2.7.0
 cryptography==45.0.6
+pyserial==3.5
