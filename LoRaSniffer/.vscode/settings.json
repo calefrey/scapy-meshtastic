@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "bit": "cpp",
+        "array": "cpp",
+        "tuple": "cpp"
+    }
+}
