@@ -9,6 +9,7 @@ class Databse(sqlite3.Connection):
             "src",
             "dst",
             "packet_id",
+            "packet",
             "payload",
             "appname",
             "appdata",
@@ -22,7 +23,6 @@ class Databse(sqlite3.Connection):
             "role",
             "isUnmessagable",
             "hwModel",
-            "last_updated",
         ]
 
         cur.execute(f"""

@@ -31,6 +31,8 @@ def process_packet(pkt):
                 "packet_id": hex(pkt.packet_id),
             }
         )
+        # include all the MeshPacket layer data for e.g. hop counts
+        packet_data["packet"] = json.dumps(pkt[MeshPacket].fields)
 
     if pkt.haslayer(MeshPayload):  # portnum, want_response, request/reply ids
         packet_data["payload"] = json.dumps(pkt[MeshPayload].fields)
