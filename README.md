@@ -11,4 +11,5 @@ See `app.py` for example usage, and the scapy website for the features you can d
 Future plans:
 - [ ] Support user-supplied channel keys to decode messages that use different keys
 - [x] Find and document hardware/software for capturing and packets over the air
-- [ ] Add logging to a database for later analysis
+- [x] Add logging to a database for later analysis
+- [ ] Integrate both the capture and logging parts into one script without needing to do piping
