@@ -1,5 +1,6 @@
 from scapy.all import sniff
-from scapy_meshtastic import MeshText, MeshApp
+
+from scapy_meshtastic import MeshApp, MeshText
 
 
 def print_packet(pkt):

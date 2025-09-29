@@ -1,5 +1,5 @@
-import time
 import struct
+import time
 
 
 def make_header(l2type: int = 270):

@@ -1,0 +1,40 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "PlatformIO Build",
+            "type": "shell",
+            "command": "pio run -t build",
+            "options": {
+                "cwd": "${workspaceFolder}/LoRaSniffer"
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "PlatformIO Upload",
+            "type": "shell",
+            "command": "pio run -t upload",
+            "options": {
+                "cwd": "${workspaceFolder}/LoRaSniffer"
+            },
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "Format with Ruff",
+            "type": "shell",
+            "command": [
+                "ruff check --select I --fix &&",
+                "ruff format ."
+            ],
+            "group": "none",
+            "problemMatcher": []
+        }
+    ]
+}
