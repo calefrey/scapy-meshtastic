@@ -45,7 +45,6 @@ def process_packet(pkt):
         if pkt.portnum == pb.portnums_pb2.NODEINFO_APP:
             nodeinfo = pkt.appdata
             nodeinfo.update({"_id": "!" + hex(pkt.src)[2:]})
-            nodeinfo["last_updated"] = str(pkt.time)
             db.insert("nodes", nodeinfo, on_confict="REPLACE")
 
     elif pkt.haslayer(MeshText):  # plain old text message
@@ -69,4 +68,5 @@ if __name__ == "__main__":
             db.close()
 
     elif args.filename:
-        sniff(offline=args.filename, prn=process_packet)
+        s = sniff(offline=args.filename, prn=process_packet)
+        print(f"Processed {len(s)} packets")
