@@ -18,7 +18,12 @@ args = parser.parse_args()
 
 def process_packet(pkt):
     # LoRaTap -> MeshPacket -> MeshPayload -> MeshApp OR MeshText
-    assert pkt.haslayer(LoRaTap)  # It better!
+
+    try:
+        assert pkt.haslayer(LoRaTap)  # It better!
+    except AssertionError:
+        print("Found something that isn't a LoRaTap packet. Skipping.")
+        return
 
     packet_data = {}
     packet_data["_timestamp"] = str(pkt.time)  # use the packet's capture time
