@@ -32,11 +32,34 @@ You can pair it directly with `pcap_writer.py` and a LoRa stick to get live upda
 python pcap_writer.py -o - | python record_packets.py -
 ```
 
+See `sample-views.sql` for some sql commands that will create helpful node- and packet- views.
+
+## Log to database and display in Wireshark simultaneously (as seen at JawnCon 0x2)
+This works on a linux machine. I haven't investigated Windows alternatives yet.
+
+```bash
+# Since each pipe is FIFO both consumers can't share a pipe. So we'll create two.
+mkfifo /tmp/pcap_pipe1 /tmp/pcap_pipe2
+# Now we start our consumers, wireshark and record_packets
+wireshark -k -i /tmp/pcap_pipe1 &
+ # Couldn't get redirection to work on short notice so we're piping from cat. Oh well.
+cat /tmp/pcap_pipe2 | python record_packets.py - &
+# Now we create our source and pipe the output to tee - which goes to both outputs
+python pcap_writer.py -p /dev/ttyACM0 -o - | tee /tmp/pcap_pipe1 > /tmp/pcap_pipe2 &
+```
+You can view the status of these tasks by running `jobs`, but it will only work for jobs in that terminal session.
+Quit by `fg`ing each process and `Ctrl-C` them
+
+To view the list of active nodes, sorted by most recent announcement time, I ran an sqlite query in a `watch` loop.
+
+```bash
+watch "sqlite3 database.db -readonly -header -markdown 'SELECT * from NodeView order by lastheard DESC'"
+```
+
 Note that none of these live capture/pipe examples will work in PowerShell because it won't pipe binary data. Use cmd if on windows.
 
 Future plans:
-- [ ] Support user-supplied channel keys to decode messages that use different keys
 - [x] Find and document hardware/software for capturing and packets over the air
 - [x] Add logging to a database for later analysis
+- [x] Document some recommended SQL viewer queries for network analysis
 - [ ] Integrate both the capture and logging parts into one script without needing to do piping
-- [ ] Document some recommended SQL viewer queries for network analysis
