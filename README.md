@@ -62,4 +62,5 @@ Future plans:
 - [x] Find and document hardware/software for capturing and packets over the air
 - [x] Add logging to a database for later analysis
 - [x] Document some recommended SQL viewer queries for network analysis
+- [x] Support capture and decoding of MQTT packets with a demo
 - [ ] Integrate both the capture and logging parts into one script without needing to do piping
