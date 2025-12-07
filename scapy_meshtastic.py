@@ -109,7 +109,7 @@ class LoRaTap(Packet):
         ByteEnumField("bandwidth", None, {250: "unknown (250)"}),
         # uint8_t       sf;		        /* LoRa SF (sf_t) [7, 8, 9, 10, 11, 12] */
         # typedef enum  sf  { SF7=7, SF8, SF9, SF10, SF11, SF12 } sf_t;
-        ByteEnumField("sf", None, {7: 7, 8: 8, 9: 9, 10: 10, 11: 11}),
+        ByteEnumField("sf", None, {7: "7", 8: "8", 9: "9", 10: "10", 11: "11"}),
         PacketRSSIField("packet_rssi", None),
         MaxRSSIField("max_rssi", None),
         CurrentRSSIField("current_rssi", None),
@@ -137,8 +137,8 @@ class MeshPacket(Packet):
         # reserve 0 bits for these values since they're contained in the flag
         BitField("hop_limit", 0, 0),
         BitField("hop_start", 0, 0),
-        BitEnumField("want_ack", 0, 0, {0: False, 1: True}),
-        BitEnumField("via_mqtt", 0, 0, {0: False, 1: True}),
+        BitEnumField("want_ack", 0, 0, {0: "False", 1: "True"}),
+        BitEnumField("via_mqtt", 0, 0, {0: "False", 1: "True"}),
         XByteField("channel_hash", None),
         XByteField("next_hop", None),
         XByteField("relay_node", None),
@@ -180,7 +180,7 @@ class MQTTPacket(Packet):
         RadioIdField("src", None),
         XByteField("packet_id", None),
         # TODO: the rest of these if applicable
-    ]  # pyright: ignore # it thinks the typing is a mismatch
+    ]
 
     def do_dissect(self, s):
         service_envelope = pb.mqtt_pb2.ServiceEnvelope()
@@ -240,7 +240,7 @@ class MeshPayload(Packet):
                 key.ljust(32, b"\x00")
                 return key
             else:
-                raise "Error: Channel key is longer than 32 bytes"
+                raise ValueError("Channel key is longer than 32 bytes")
 
         def aes_iv(packet_id, packet_from) -> bytearray:
             # initialization vector for AES crypto
@@ -260,7 +260,7 @@ class MeshPayload(Packet):
             return decrypted
 
         key = crypto_key(mesh_key)
-        meshpkt = self.underlayer
+        meshpkt = self.underlayer  # type: MeshPacket | MQTTPacket #pyright: ignore
         if key:
             decrypted = decrypt_payload(key, meshpkt.packet_id, meshpkt.src, payload)
             return decrypted
@@ -284,15 +284,14 @@ class MeshPayload(Packet):
             self.emoji = subpacket.emoji
             self.bitfield = subpacket.bitfield
         except DecodeError:
-            # assume decryption error/key mismatch
-            raise Exception("could not decode with provided key")
+            raise DecodeError("Could not decode with provided key")
         return subpacket.payload
 
 
 class MeshText(Packet):
     # Plain-text message payloads
     name = "Message"
-    fields_desc = [StrField("appname", "TEXT_MESSAGE_APP"), StrField("appdata", "")]
+    fields_desc = [StrField("appname", b"TEXT_MESSAGE_APP"), StrField("appdata", b"")]
 
     def do_dissect(self, s):
         self.appdata = s.decode()
@@ -302,7 +301,10 @@ class MeshText(Packet):
 class MeshApp(Packet):
     # Non-text message payloads with special behavior per-portnum
     name = "MeshApp"
-    fields_desc = [StrField("appname", "text"), StrField("appdata", "")]
+    fields_desc = [
+        StrField("appname", b"text"),
+        StrField("appdata", b""),
+    ]
 
     def parse_pb_payload(self, port: int, payload: bytes):
         try:
@@ -327,12 +329,12 @@ class MeshApp(Packet):
                 NotImplementedError("This app is not yet supported", port, payload)
                 return
         except DecodeError:
-            raise (f"Could not unpack meshtastic app payload for {port=}")
+            raise DecodeError(f"Could not unpack meshtastic app payload for {port=}")
 
     def do_dissect(self, s):
-        port = self.underlayer.portnum
+        port = self.underlayer.portnum  # Underlayer is MeshPacket #pyright: ignore
         self.appname = pb.portnums_pb2.PortNum.Name(port)
-        self.appdata = MessageToDict(self.parse_pb_payload(port, s))
+        self.appdata = MessageToDict(self.parse_pb_payload(port, s))  # pyright: ignore I don't care, dump the dict
 
 
 # register L2-type/encapsulation 270 as LoRaTap
