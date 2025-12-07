@@ -166,6 +166,36 @@ class MeshPacket(Packet):
         return super().post_build(pkt, pay)
 
 
+class MQTTPacket(Packet):
+    name = "MQTTPacket"
+    # the raw data sent as a protobuf via MQTT channels
+    # thankfully we can reuse the lower layers once we decode this layer
+
+    class RadioIdField(LEIntField):
+        def i2repr(self, pkt, x):
+            return "!" + hex(x)[2:]  # !<hex>
+
+    fields_desc = [
+        RadioIdField("dst", None),
+        RadioIdField("src", None),
+        XByteField("packet_id", None),
+        # TODO: the rest of these if applicable
+    ]  # pyright: ignore # it thinks the typing is a mismatch
+
+    def do_dissect(self, s):
+        service_envelope = pb.mqtt_pb2.ServiceEnvelope()
+        try:
+            mqtt_data = service_envelope.FromString(s)
+            self.dst = mqtt_data.packet.to
+            self.src = getattr(
+                mqtt_data.packet, "from"
+            )  # need to do this since from is a reserved word
+            self.packet_id = mqtt_data.packet.id
+        except DecodeError:
+            raise DecodeError(f"Not a service envelope: {s}")
+        return mqtt_data.packet.encrypted
+
+
 class MeshPayload(Packet):
     name = "MeshPayload"
     # Decrypt and decode the meshtastic message protobuf
@@ -313,6 +343,7 @@ bind_layers(LoRaTap, MeshPacket, sync_word=0x2B)
 
 # decrypt and extract the payload
 bind_layers(MeshPacket, MeshPayload)
+bind_layers(MQTTPacket, MeshPayload)
 
 bind_layers(MeshPayload, MeshText, portnum=1)  # special exception for normal text
 bind_layers(MeshPayload, MeshApp)  # all other portnums get protobuf decoded
